@@ -244,6 +244,177 @@ select count (*) as empleados, oficio from emp where oficio in ('ANALISTA',
 select count (*) as empleados, oficio from emp
 group by oficio having count (*) >2;
 
+-----DIA MIERCOLES 26/03/2025
+
+
+
+--11. Calcular el salario medio de la plantilla de la sala 6, según la función
+--que realizan. Indicar la función y el número de empleados
+
+
+
+--13. Mostrar el número de hombres y el número de mujeres que hay
+--entre los enfermos
+
+select count (*) as genero_enfermos; 
+
+--15.Calcular el número de salas que existen en cada hospital.
+
+select count (*) as numero_salas, hospital_cod from sala group by hospital_cod;
+
+
+--16. Mostrar el número de enfermeras que existan por cada sala
+
+select count (*) as enfermeras, sala_cod from plantilla where funcion = 'ENFERMERA' group by sala_cod;
+
+
+
+
+--CONSULTAS DE COMBINACION
+
+--1.- necesitamos el campo de relacion entre las tablas
+--2.- debemos poner el nombre de cada tabla y cada campo en la consulta
+--3.- sintaxis: 
+--select tabla1.campo1, tabla1.campo2, tabla2.campo1, tabla2.campo2
+--from tabla1 inner join tabla2
+--on tabla1.campo_relacion=tabla2.campo_relacion;
+
+--mostrar apellido, el oficio de empleados,
+--junto a su nombre de departamento y localidad
+
+select emp.apellido, emp.oficio, dept.dnombre, dept.loc
+from emp
+inner join dept
+on emp.dept_no = dept.dept_no;
+
+--tenemos otra sintaxis para realizar las consultas de combinación
+
+select emp.apellido, emp.oficio, dept.dnombre, dept.loc
+from emp, dept
+where emp.dept_no=dept.dept_no;
+
+--la primera es más eficiente... ******NO USAR LA SEGUNDA*******
+
+--queremos mostrar los datos solo de madrid
+
+select emp.apellido, emp.oficio, dept.dnombre, dept.loc
+from emp
+inner join dept
+on emp.dept_no = dept.dept_no
+where dept.loc='MADRID';
+
+--No es obligatorio incluir el nombre de la tabla antes del campo a mostrar en el select
+--siempre que no haya nombres de columnas repetidos, si hay alguno repetidop, daría error.
+
+select emp.apellido, oficio, dept.dnombre, loc
+from emp
+inner join dept
+on emp.dept_no = dept.dept_no
+where dept.loc='MADRID';
+
+--******no usar****** este anterior
+
+--podemos incluir alias a los nombres de las tablas,
+--para llamarlas así a lo largo de la consulta
+--cuando ponemos alias, la tabla se llamará así para toda la consulta
+
+select e.apellido, e.oficio, d.dnombre, d.loc
+from emp e
+inner join dept d
+on e.dept_no = d.dept_no order by d.loc;
+
+
+--tenemos otro tipo de join en las bases de datos
+--inner
+--left
+--right
+--full
+--cross, que es el producto cartesiano: combinar cada dato de la ttabla 
+--con todos los de la otra
+
+select distinct dept_no from emp;
+select * from emp;
+select * from dept;
+
+INSERT INTO emp VALUES('1111', 'sin dept', 'EMPLEADO', 7907
+, TO_DATE('04-04-1996', 'DD-MM-YYYY'), 162500, 0, 50);
+
+--ahora tenemos un empleado sin dept en el 50
+
+select emp.apellido, dept.dnombre, dept.loc
+from emp
+inner join dept
+on emp.dept_no=dept.dept_no;
+
+--la tabla de la izq es la tabla antes del join, allí aparece 'sin dept'
+
+select emp.apellido, dept.dnombre, dept.loc
+from emp
+left join dept
+on emp.dept_no=dept.dept_no;
+
+--la tabla de la derecha es la que está despues del join
+
+select emp.apellido, dept.dnombre, dept.loc
+from emp
+right join dept
+on emp.dept_no=dept.dept_no;
+
+--full join apenas se utiliza
+
+select emp.apellido, dept.dnombre, dept.loc
+from emp
+full join dept
+on emp.dept_no=dept.dept_no;
+
+describe emp;
+
+--cross join apenas se utiliza
+
+select emp.apellido, dept.dnombre, dept.loc
+from emp
+cross join dept;
+
+rollback;
+
+--mostrar la media salarial de los doctores por hospital
+select avg(salario) as media_salario, hospital_cod
+from doctor
+group by hospital_cod;
+
+--mostrar la media salarial de los doctores del hospital, mostrando el nombre del hospital
+
+select avg(doctor.salario) as media_salario, hospital.nombre
+from doctor
+inner join hospital
+on doctor.hospital_cod=hospital.hospital_cod
+group by hospital.nombre;
+
+--mostrar el numero de empleados en cada localidad
+select * from dept;
+select * from emp;
+
+select count(emp.emp_no) as numero_empleados, dept.loc
+from dept
+left join emp
+on emp.dept_no=dept.dept_no
+group by dept.loc;
+
+--*****no usar count (*) si queremos saber empleados reales,
+--ya que contará los nulos****
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
