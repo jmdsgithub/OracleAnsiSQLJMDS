@@ -404,6 +404,214 @@ group by dept.loc;
 --ya que contará los nulos****
 
 
+--***** EJERCICIOS CONSULTAS DE AGRUPACIÓN ******
+
+--1.- Seleccionar el apellido, oficio, salario, numero de departamento y su 
+--nombre de todos los empleados cuyo salario sea mayor de 300000 
+
+select emp.apellido, emp.oficio, emp.salario, dept.dept_no, dept.dnombre from emp
+inner join dept
+on emp.dept_no=dept.dept_no where emp.salario > 300000;
+
+select * from emp;
+select * from dept;
+
+--2.- Mostrar todos los nombres de Hospital con sus nombres de salas correspondientes. 
+
+select * from hospital;
+select * from sala;
+select hospital.nombre as nombre_hospital, sala.nombre as nombre_sala from hospital inner join sala
+on hospital.hospital_cod=sala.hospital_cod;
+
+--3.- Calcular cuántos trabajadores de la empresa hay en cada ciudad.
+
+select count (emp.emp_no) as numero_trabajadores, dept.loc from emp
+right join dept 
+on emp.dept_no=dept.dept_no group by dept.loc;
+
+--4.- Visualizar cuantas personas realizan cada oficio en cada departamento
+--mostrando el nombre del departamento. 
+
+select dept.dnombre, count (emp.emp_no) as numero_trabajadores, emp.oficio
+from emp right join dept on emp.dept_no=dept.dept_no group by dept.dnombre, emp.oficio;
+
+--5.- Contar cuantas salas hay en cada hospital, mostrando el nombre de las salas
+--y el nombre del hospital. 
+select * from hospital;
+select * from sala;
+ 
+ select count (sala.nombre) as numero_sala, hospital.nombre from sala
+ left join hospital on hospital.hospital_cod=sala.hospital_cod groupby sala.nombre, hospital.nombre;
+
+--6.- Queremos saber cuántos trabajadores se dieron de alta
+--entre el año 1997 y 1998 y en qué departamento.
+
+select count (emp.emp_no) as ALTAS, dept.dnombre from dept inner join emp on
+emp.dept_no=dept.dept_no
+where emp.fecha_alt > '01/01/1997' and emp.fecha_alt < '31/12/1998'
+group by dept.dnombre;
+
+--7.- Buscar aquellas ciudades con cuatro o más personas trabajando. 
+select * from emp;
+select * from dept;
+
+select dept.loc, count (emp.emp_no) as personas_trabajando from dept inner join emp on
+emp.dept_no=dept.dept_no having count (emp.emp_no) >= 4;
+
+--8.-Calcular la media salarial por ciudad.  Mostrar solamente la media para Madrid y Elche. 
+
+select dept.loc as ciudad, avg (emp.salario) as media_salarial
+from dept inner join emp on
+emp.dept_no=dept.dept_no
+group by dept.loc
+having dept.loc in ('madrid', 'sevilla')
+
+
+--9.  Mostrar los doctores junto con el nombre de hospital en el que ejercen,
+--la dirección y el teléfono del mismo. 
+
+select doctor.apellido, hospital.nombre, hospital.direccion, hospital.telefono
+from doctor inner join hospital on doctor.hospital_cod=hospital.hospital_cod;
+
+--10.- Mostrar los nombres de los hospitales junto con el mejor salario de
+--los empleados de la plantilla de cada hospital. 
+
+select hospital.nombre, max(plantilla.salario) as salario_maximo
+from hospital inner join plantilla on 
+hospital.hospital_cod=plantilla.hospital_cod group by hospital.nombre;
+ 
+ 
+ --11.- Visualizar el Apellido, función y turno de los empleados de la
+ --plantilla junto con el nombre de la sala y el nombre del hospital con el teléfono. 
+ 
+ -- ****** POR CADA TABLA UN JOIN (inner, left, rigth) Y UN ON *****
+ 
+ select plantilla.apellido, plantilla.funcion, plantilla.turno, sala.nombre as nombre_sala
+ , hospital.nombre as nombre_hospital
+ from plantilla inner join hospital on plantilla.hospital_cod=hospital.hospital_cod
+ inner join sala
+ on hospital.hospital_cod=sala.hospital_cod
+ and plantilla.sala_cod=sala.sala_cod;
+
+
+--12.- Visualizar el máximo salario, mínimo salario de los Directores dependiendo 
+--de la ciudad en la que trabajen. Indicar el número total de directores por ciudad. 
+
+select count (emp.emp_no) as directores, dept.loc as ciudad,
+max (emp.salario) as salario_maximo
+min (emp.salario) as salario_minimo
+from dept inner join emp on
+emp.dept_no=dept.dept_no
+where oficio = 'DIRECTOR';
+
+
+--13.- Averiguar la combinación de que salas podría haber por 
+--cada uno de los hospitales. 
+
+select hospital.nombre as nombre_hospital, sala.nombre as nombre_sala
+from hospital cross join sala
+on hospital.hospital_cod=sala.hospital_cod;
+
+--***********************************************
+--***********************************************
+
+--SUBCONSULTAS
+
+--DEPENDEN DE OTRAS CONSULTAS
+--no importsa el nivel de anidamiento, aunque pueden ralentizar las respuestas.
+--generan bloqueos en consultas select
+
+--quiero visualizar los datos del empleado que mas cobra de EMP
+
+select max(salario) from emp;
+--resp=650000
+select * from emp where salario=650000;
+
+--resp:
+
+select * from emp where salario=(select max (salario) from emp);
+
+--mostrar los empleados que tienen el oficip del empleado gil
+
+select * from emp where oficio=(select oficio from emp where apellido = 'gil');
+
+-- con el mismo oficio que gil y que cobren menos q jimenez
+
+select * from emp where oficio=(select oficio from emp where apellido = 'gil')
+and salario < (select salario from emp where apellido='jimenez');
+
+-- mostrar los empleados que tienen el oficip del empleado gil y de jimenez
+--recordar: si una subcosulta devuelve mas de un valor usaremos el operador IN
+
+select * from emp where oficio in (select oficio from emp where apellido = 'gil'
+or apellido = 'jimenez');
+
+-- mostar apellidos y oficios de los empleados del dpto de madrid
+
+select apellido, oficio from emp where dept_no=
+(select dept_no from dept where loc='MADRID');
+
+--lo antterior genera bloqueos, no usarlo, no usarlo, no usarlo...
+--usar un join, no subconsultas, cuando las tablas están relacionadas!!!
+
+--la correcta es:
+
+select emp.apellido, emp.oficio from emp
+inner join dept
+on emp.dept_no=dept.dept_no
+where dept.loc='MADRID';
+
+
+--CONSULTAS UNION
+--muestran en un mismo cursor un resultado
+--normas:
+--1.- la primera consulta es la jefa
+--2.- todas las consultas deben tener el mismo numero de columnas
+--3.- todas las columnas deben tener el mismo tipo de dato entre si
+
+
+--mezclamos emp, plantilla y doctor
+
+select apellido, oficio, salario from emp
+union
+select apellido, funcion, salario from plantilla;
+
+--podemos ordenar y filtar
+--para organizar, debemos indicar el numero de columna y ordenarla 'ORDER BY #'
+
+select apellido, oficio, salario from emp
+union
+select apellido, funcion, salario from plantilla
+order by 3;
+
+select apellido, oficio, salario from emp
+union
+select apellido, funcion, salario from plantilla
+order by apellido;
+
+--podemos filtrar los datos de la consulta, pero cada filtro será para cada consulta
+-- no la coge el union
+
+select apellido, oficio, salario from emp
+where salario < 300000
+union
+select apellido, funcion, salario from plantilla
+where salario < 300000
+union
+select apellido, especialidad, salario from doctor
+where salario < 300000
+order by 1;
+
+-- union elimina los reultados repetdos
+
+select apellido, oficio from emp
+union
+select apellido, oficio from emp;
+
+--si se requieren los repetidos se usa 'union all'
+
+
+
 
 
 
