@@ -613,30 +613,197 @@ select apellido, oficio from emp;
 
 
 
+-----****31/03/2025***************** 
 
 
+--consultas SELECT TO SELECT
+--es una consulta sobre un cursor (un select ya realizado)
 
 
+select * from
+(select apellido, oficio, salario as sueldo from emp
+union
+select apellido, funcion, salario from plantilla
+union
+select apellido, especialidad, salario from doctor) consulta
+where consulta.sueldo < 300000;
+
+--******consultas a nivel de fila*********
+--son consultas creadas para dar fotrmato a la salida de datos
+--no modifican los datos de la table, los muestran de otra forma segun yo los necesite
 
 
+--mostramoes el apellido de la plantilla, con su turno,
+--pero no m, n, t sino que se vea mañana, tarde y nuche
+
+select apellido, funcion
+, case turno
+when 'T' then 'TARDE'
+when 'M' then 'MAÑANA'
+else 'NOCHE'
+end as FORMATO
+from plantilla;
+
+--2.- evaluar por un operador(rango, mayor o menor, distinto)
+
+--evaluar salarios de la plantilla
+
+select apellido, funcion, salario
+, case
+when salario >=250000 then 'salario correcto'
+when salario > 170000 and salario < 250000 then 'media salarial'
+else 'becario'
+end as rango_salarial, salario
+from plantilla;
+
+--1.- mostrar la suma salarial de los empleados por su nombre de departamento
+--2.- mostar la suma salarial de los doctores por su nombre de hospital
+--3.- mostrar todo junto en una misma consulta
+
+select * from emp;
+select * from dept;
+select * from doctor;
+--1.- 
+select sum (salario) as SUMA, dept_no from emp group by dept_no;
+
+select sum(emp.salario) as SUMA_SALARIOS, dept.dnombre as departamento
+from emp
+inner join dept
+on emp.dept_no=dept.dept_no
+group by dept.dnombre;
+
+--2.- 
+select sum (salario)as SUMA_SALARIO, hospital_cod from doctor group by hospital_cod;
 
 
+select sum(doctor.salario) as SUMA_SALARIOS, hospital.nombre as hospital
+from doctor
+inner join hospital
+on doctor.hospital_cod=hospital.hospital_cod
+group by hospital.nombre;
+
+--3.-
+select sum(emp.salario) as SUMA_SALARIOS, dept.dnombre as departamento
+from emp
+inner join dept
+on emp.dept_no=dept.dept_no
+group by dept.dnombre
+union 
+select sum(doctor.salario) as SUMA_SALARIOS, hospital.nombre as hospital
+from doctor
+inner join hospital
+on doctor.hospital_cod=hospital.hospital_cod
+group by hospital.nombre;
 
 
+--******CONSULTAS DE ACCION*******
+--SON CONSULTAS PARA MODIFICAR LOS REGISTROS DE LA BASE DE DATOS
 
+--commit:hace los cambios permanentes
+--rollback: deshace los cambios NO permanentes
 
+--insert: inserta registros
+--update: modifica registros
+--delete: elimina registros
 
+--tenemos dos tipos de sintaxis
+--1.- insertar todos los datos de la tabla, en el mismo orden e la tabla
+--
+insert into dept values (50, 'oracle', 'bernabeu');
+commit;
+insert into dept values (51, 'oracle1', 'bernabeu1');
+select * from dept;
+rollback;
+select * from dept;
+rollback;
 
+--2.-inseertar algunos datos de la tabla
 
+insert into dept (dept_no, loc) values(55, 'ALMERIA');
+ 
+--las subconsultas son muy utiles, por ejemplo, para generaar el siguiente nro
+--disponibleen la consulta de acción
 
+select max (dept_no) + 1 from dept;
+insert into dept values((select max (dept_no) + 1 from dept), 'SIDRA', 'GIJON');
 
+--delete
+--elimina una o varias filas de una tabla, si no hace nada, no da mensaje de error
 
+delete from dept where dnombre='oracle';
 
+--eliminar tdos los mpleados de granada
 
+delete from emp where dept_NO=
+(select  dept_no from dept where loc = 'GRANADA');
 
+select * from emp;
+select * from dept;
+rollback;
 
+--modificar una o varias flas de la tabla al mismo tiempo
+--modificar el salario de la plantilla del turno de noche, todos cobraran 315000
 
+update plantilla set salario=315000
+where turno='N';
 
+--modificar la ciudad y el nombre del departamento 10.
+--se llamará cuentas y lo mudamos a toledo
 
+update dept set loc='TOLEDO', dnombre='CUENTAS'
+where DEPT_NO=10;
 
+--podemos mantener el valor de una columna y asignar "algo" con aoperaciones matemáticas
+
+update emp set salario=salario + 1;
+
+--podemos utilizar sub consultas
+--ojo: si las subconsultas están en el set solamente deben devolver un dato
+
+--quiero poner el salariio de sala a arroyo
+
+update emp set salario=(select salario from emp where apellido='sala')
+where apellido='arroyo';
+
+--poner a la mitad el salario de los empleados de barcelona
+
+update emp set salario=salario/2 where dept_no=(select dept_no from dept where loc='BARCELONA');
+
+rollback;
+
+--EJERCICIOS *******CONSULTAS DE ACCION*********
+
+--1.-
+--Dar de alta con fecha actual al empleado José Escriche Barrera como 
+--programador perteneciente al departamento de producción. 
+--Tendrá un salario base de 70000 pts/mes y no cobrará comisión.
+insert into emp values (50, 'oracle', 'bernabeu');
+
+insert into emp (emp_no, apellido, oficio, fecha_alt, salario, comision, dept_no)
+values((select max (emp_no) + 1 from emp), 'escriche', 'PROGRAMADOR', '31/03/2025', 70000, 0
+, (select dept_no from dept where dnombre='PRODUCCIÓN'));
+
+--2.- Se quiere dar de alta un departamento de informática
+--situado en Fuenlabrada (Madrid). 
+
+insert into DEPT (DEPT_NO, dnombre, loc) 
+values((select max (dept_no) + 10 from dept), 'INFORMÁTICA', 'FUENLABRADA');
+
+--3.- El departamento de ventas, por motivos peseteros, se traslada a Teruel,
+--realizar dicha modificación.
+
+update DEPT set LOC='TERUEL' where LOC='BARCELONA';
+
+--4.- En el departamento anterior (ventas), se dan de alta dos empleados:
+--Julián Romeral y Luis Alonso.  Su salario base es el menor que cobre un empleado,
+--y cobrarán una comisión del 15% de dicho salario.
+select * from emp;
+
+insert into emp (emp_no, apellido, oficio, fecha_alt, salario, comision, dept_no)
+values ((select max (emp_no) + 1 from emp), 'romeral', 'EMPLEADO', '31/03/2025'
+, (select min (salario) from emp where oficio ='EMPLEADO')
+, ((select min (salario) from emp where oficio ='EMPLEADO')*.15)
+, (select dept_no from dept where dnombre='VENTAS'));
+
+SELECT COMISION 
 
